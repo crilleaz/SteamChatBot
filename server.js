@@ -41,30 +41,7 @@ var questionAnswers = [
     'Never'
 ];
 
-<<<<<<< HEAD
 var logger = new Winston.Logger({
-=======
-var insultList = [ // TBH i will probably delete this,I don't like it and it wasn't my idea to add this anyway
-    [`Fuck you `, '!'],
-    ['', ' smells like trash.'],
-    ['', ' you mom gay.'],
-    ['', ' is a clinking, clanking, clattering collection of caliginous junk.'],
-    ['', ' is nothing. If he was in my toilet I wouldn\'t bother flushing it.'],
-    ['', ' is a meat-headed shit sack'],
-    ['Best part of ', ' ran down the crack of his momma’s ass and ended up as a brown stain on the mattress'],
-    ['End your life ', '.'],
-    ['',' is a one ugly motherfucker.'],
-    ['',' is so ugly he could be a modern art masterpiece.'],
-    ['Scuse me ', ', is that your nose or did a bus park on your face?'],
-    ['','? More like the abortion that lived.'],
-    ['', ', you miserable shit eating autist, how do you live knowing you will never change?'],
-    ['',' should clone himself, so he can fuck himself.'],
-    //['',' is a no business, born insecure junkyard mother fucker.'],
-
-];
-
-var logger = new Winston.Logger({                               // Setup new logger
->>>>>>> 574d99a868a3a99dbfc08964e91cfa2650cf5e90
     transports: [
         new Winston.transports.Console({
             colorize: true,
@@ -97,6 +74,18 @@ function initializeClient(login) {
         pollInterval: 10000,                                      // Poll every 10s
         cancelTime: 300000                                      // Expire after 5 min
     });
+
+    var bot;
+    if (config.cleverbot.user) {
+        var bot = new cleverbot(config.cleverbot.user, config.cleverbot.key);
+        bot.create((err, session) => {
+            if (err) {
+                logger.error(`Error creating CleverBot session: ${err}`);
+            } else {
+                logger.debug(`[${login.username}] Created CleverBot session: ${session}`);
+            }
+        });
+    }
 
 // Event part of code
 
@@ -170,7 +159,7 @@ function initializeClient(login) {
     // Entered group chat
     this.client.on('chatEnter', (chatID, response) => {
 
-        for (var i in steamIDs) {
+        for (var i in BotID) {
             if (this.chats[chatID].members.hasOwnProperty(i))
                 this.client.leaveChat(chatID);
         }
@@ -181,7 +170,7 @@ function initializeClient(login) {
                 chatInterval[chatID] = setInterval(() => { this.GroupTimer(chatID) }, 7200000);
 
         } else {
-            this.client.chatMessage(chatID, 'Hi! This is first time i was invited to this chat!\nIf you need any help use /help\nIf somebody invted me to your group and you dont want any bots in your group ask mod or admin to use /leavechat and/or /leavegroup (admin only) or i will just leave when i dont recieve any command for 48 hours');
+            this.client.chatMessage(chatID, 'Hi! This is first time i was invited to this chat!\nIf you need any help use /help\nIf somebody invted me to your group and you dont want any bots in your group ask mod or admin to use /leavechat and/or /leavegroup (admin only)');
             chats[chatID] = new ChatProperties();
             //chatInterval[chatID] = setInterval(() => { this.GroupTimer(chatID) }, 7200000); //7200000
             fs.writeFile('chats.json', JSON.stringify(chats).replace(/[\u007F-\uFFFF]/g, (chr) => {
@@ -313,7 +302,10 @@ function initializeClient(login) {
                 } else if (noteArray[1]) {
 
                     if (note.hasOwnProperty(noteArray[1].toLowerCase())) {
-                        this.client.chatMessage(chatID, note[noteArray[1].toLowerCase()]);
+			if (noteArray[1].length <= chats[chatID].maxlength || chats[chatID].maxlength === 0)
+			    this.client.chatMessage(chatID, note[noteArray[1].toLowerCase()]);
+			else
+			    this.client.chatMessage(chatID, 'This note is too long :(');
                     } else {
                         this.client.chatMessage(chatID, 'Note doesn\'t exist!');
                     }
@@ -380,7 +372,11 @@ function initializeClient(login) {
 
                     var definition = JSON.parse(response.body);
                     if (definition.result_type === 'exact') {
-                        this.client.chatMessage(chatID, `${definition.list[0].word}.: ${definition.list[0].definition}`);
+
+			if (definition.list[0].definition.length <= chats[chatID].maxlength || chats[chatID].maxlength === 0)
+   			    this.client.chatMessage(chatID, `${definition.list[0].word}.: ${definition.list[0].definition}`);
+			else
+			    this.client.chatMessage(chatID, 'Sorry this definition is too long :(');
                     } else {
                         this.client.chatMessage(chatID, 'Definition not found.');
                     }
@@ -402,7 +398,7 @@ function initializeClient(login) {
                     } else {
 
                         logger.info(`[${login.username}] Recieved /b command (${message}) command. user: ${this.client.users[userID64].player_name} (${userID64})`);
-
+			
                         this.client.chatMessage(chatID, response);
                     }
                 });
@@ -462,12 +458,7 @@ function initializeClient(login) {
 
                 logger.info(`[${login.username}] recieved "/group" command ${this.client.users[userID64].player_name} (${userID64})`);
 
-<<<<<<< HEAD
                 this.client.inviteToGroup(userID64, config.group);
-=======
-                //this.client.inviteToGroup(userID64, config.group);
->>>>>>> 574d99a868a3a99dbfc08964e91cfa2650cf5e90
-                
 
         //status
             } else if (message.startsWith('/status') && chats[chatID].commandStatus.status) {
@@ -604,8 +595,13 @@ function initializeClient(login) {
                     } else if (message.toLowerCase().startsWith('valediction ')) {
                         message = message.substring(12);
                         chats[chatID].valediction = message;
-                    }
-                    this.client.chatMessage(chatID, 'If you have any problem configuring the bot visit: http://steamcommunity.com/groups/YaoiBot/discussions/0/1353742967809927087/');
+                    } else if (message.toLowerCase().startsWith('maxlength ')) {
+			message = message.substring(10).match(/[0-9]+/);
+			if (message)
+  			    chats[chatID].maxlength = parseInt(message);
+                        
+                    } else
+                        this.client.chatMessage(chatID, 'If you have any problem configuring the bot visit: http://steamcommunity.com/groups/YaoiBot/discussions/0/1353742967809927087/');
                 }
                 fs.writeFile('chats.json', JSON.stringify(chats).replace(/[\u007F-\uFFFF]/g, (chr) => {
                     return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4)
@@ -652,8 +648,8 @@ function initializeClient(login) {
                 message = message.substring(6);
 
                 if (message.includes(/[!:(range)]/i))
-		            return;
-		
+                            return;
+                
                 var result = '';
                 try {
                     var result = mathjs.eval(message).toString();
@@ -661,7 +657,7 @@ function initializeClient(login) {
                     var result = 'Are you sure you entered everything correctly?';
                 }
                 this.client.chatMessage(chatID, result);
-	    //randnum
+            //randnum
             } else if (message.toLowerCase().startsWith('/randnum ') && chats[chatID].commandStatus.randnum) {
 
                 if (!(this.CheckPermissionCommand(chatID, 'randnum', senderRank)))
@@ -677,7 +673,7 @@ function initializeClient(login) {
                     var number = Math.floor(Math.random() * parseInt(number[1]));
                     this.client.chatMessage(chatID, number.toString());
                 }
-	    //lock
+            //lock
             } else if (message.toLowerCase() === '/lock' && chats[chatID].commandStatus.lock) {
 
                 if (!(this.CheckPermissionCommand(chatID, 'lock', senderRank)))
@@ -690,7 +686,7 @@ function initializeClient(login) {
                 } else {
                     this.client.setChatPrivate(chatID);
                 }
-	    //unlock
+            //unlock
             } else if (message.toLowerCase() === '/unlock' && chats[chatID].commandStatus.lock) {
 
                 if (!(this.CheckPermissionCommand(chatID, 'lock', senderRank)))
@@ -698,6 +694,16 @@ function initializeClient(login) {
                 this.ResetGroupTimerOnly(chatID);
 
                 this.client.setChatPublic(chatID);
+            //goodnight
+            } else if (message.toLowerCase() === '/goodnight' && chats[chatID].commandStatus.goodnight) {
+
+                if (!(this.CheckPermissionCommand(chatID, 'goodnight', senderRank)))
+                    return;
+                if (!(this.CheckTimeCommand(chatID, 'goodnight')))
+                    return;
+                this.ResetTimer(chatID, 'goodnight');
+                
+                this.client.chatMessage(chatID, `Goodnight ${this.client.users[userID64].player_name}`);
             }
 
         } else {
@@ -711,6 +717,27 @@ function initializeClient(login) {
                     logger.error(`[${login.username}] ${error.response.body}`);
                 });
             }
+        }
+    });
+
+    this.client.on('chatMessage#103582791458999408', (chatID, userID, message) => {
+        if (!(this.CheckTimeCommand(chatID, 'bot')))
+                    return;
+        this.ResetTimer(chatID, 'bot');
+        var keepchat = true;
+
+        if (message === '/stop') {
+            keepchat = !keepchat;
+        } else if (keepchat) {
+            bot.ask(message, (err, response) => {
+                /*if (err) {
+                    console.log(err);
+                }*/ 
+                    setTimeout(() => {
+                        this.client.chatMessage(chatID, response);
+                    }, 5000);
+                
+            });
         }
     });
 
@@ -902,6 +929,7 @@ function ChatProperties() {
         bot: true,
         choose: true,
         define: true,
+        goodnight: true,
         greeting: true,
         help: true,
         hug: true,
@@ -923,6 +951,7 @@ function ChatProperties() {
         bot: 1,
         choose: 1,
         define: 1,
+        goodnight: 1,
         help: 0,
         hug: 1,
         kick: 2,
@@ -944,6 +973,7 @@ function ChatProperties() {
         bot: 1,
         choose: 5,
         define: 5,
+        goodnight 5,
         help: 20,
         hug: 1,
         kick: 5,
@@ -959,6 +989,7 @@ function ChatProperties() {
         bot: 0,
         choose: 0,
         define: 0,
+        goodnight 0,
         help: 0,
         hug: 0,
         kick: 0,
@@ -970,6 +1001,7 @@ function ChatProperties() {
         slap: 0,
         status: 0
     };
+    this.maxlength = 0;
     this.greeting = 'Hi';
     this.valediction = 'Bye';
     this.lastCommandTime = 0;

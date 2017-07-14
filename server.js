@@ -459,7 +459,10 @@ function initializeClient(login) {
                 logger.info(`[${login.username}] recieved "/group" command ${this.client.users[userID64].player_name} (${userID64})`);
 
                 this.client.inviteToGroup(userID64, config.group);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 77237f56441d4d39cc6f86d47c404b56fcb0510e
         //status
             } else if (message.startsWith('/status') && chats[chatID].commandStatus.status) {
                 
@@ -829,8 +832,7 @@ function initializeClient(login) {
         }
     });
 // Other
-    
-
+	
     fs.readFile(`Polldata${login.username}.json`, (err, data) => {                   // Save polldata for later sessions if crashed or something idk
         if (err) {
             logger.warn(`[${login.username}] Error reading Polldata.json. If this is the first run, this is expected behavior: ${err}`);
@@ -899,7 +901,6 @@ function initializeClient(login) {
 fs.readFile('Notes.json', (err, data) => {
     if (err) {
         logger.error(`Error reading notes file: ${err}`);
-        note = {};
     }
     note = JSON.parse(data);
 });

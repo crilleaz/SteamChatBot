@@ -7,6 +7,4 @@ when recieved message that starts with / check if chats has own proprty chatID
 
 check if message in math includes : ! or range and if yes - return
 
-remove all unicode characters from define
-
 replace that ugly else if with a switch case

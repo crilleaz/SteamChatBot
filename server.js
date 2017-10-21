@@ -146,7 +146,7 @@ function initializeClient(login) {
 
 // Friends
     // Invited to group chat
-    this.client.on('chatInvite', (inviterID, chatID, chatName) => {      
+    this.client.on('chatInvite', (inviterID, chatID, chatName) => {
 
         if (chats.hasOwnProperty(chatID) && chats[chatID].hasOwnProperty('blocked'))
             return;
@@ -200,6 +200,10 @@ function initializeClient(login) {
                 return;
             }
 
+             if (!(this.client.chats.hasOwnProperty(chatID))) {
+                return;
+             }
+
             if (!(this.client.chats[chatID].members[userID64].hasOwnProperty('permissionLevel')))
                 switch (this.client.chats[chatID].members[userID64].rank) {
                     case 4:
@@ -221,25 +225,25 @@ function initializeClient(login) {
             if (!(this.client.chats[chatID].hasOwnProperty('permissionLevel')))
                 switch (this.client.chats[chatID].members[this.client.steamID].rank) {
                     case 4:
-                        this.client.chats[chatID].permissionLevel = 1
+                        this.client.chats[chatID].permissionLevel = 1;
                         break;
                     case 8:
-                        this.client.chats[chatID].permissionLevel = 2
-                        break;
+                        this.client.chats[chatID].permissionLevel = 2;
+                    break;;
                     case 2:
-                        this.client.chats[chatID].permissionLevel = 3
+                        this.client.chats[chatID].permissionLevel = 3;
                         break;
                     case 1:
-                        this.client.chats[chatID].permissionLevel = 4
+                        this.client.chats[chatID].permissionLevel = 4;
                         break;
                     default:
-                        this.client.chats[chatID].permissionLevel = 0
+                        this.client.chats[chatID].permissionLevel = 0;
                 }
-            
+
             if (config.owner === userID64)
-                this.client.chats[chatID].members[userID64].permissionLevel = 6
+                this.client.chats[chatID].members[userID64].permissionLevel = 6;
             else if (config.admins.includes(userID64))
-                this.client.chats[chatID].members[userID64].permissionLevel = 5
+                this.client.chats[chatID].members[userID64].permissionLevel = 5;
             var senderRank = this.client.chats[chatID].members[userID64].permissionLevel;
             var myRank = this.client.chats[chatID].permissionLevel;
         //admin and owner
@@ -249,13 +253,13 @@ function initializeClient(login) {
                 } else if (message.startsWith('/toggle ')) {
                     message = message.substring(8);
                     if (chats.hasOwnProperty(message)) {
-                        chats[message] = !chats[message];
+                        chats.commandStatus[message] = !chats.commandStatus[message];
                     }
                 } else if (message === '/whoami' && senderRank === 6) {
                     this.client.chatMessage(chatID, 'Mah master');
                 }
             }
-        
+
         //q
             if (message.toLowerCase().startsWith('/q ') && chats[chatID].commandStatus.question) {
 
@@ -333,7 +337,7 @@ function initializeClient(login) {
 
         //choose
             } else if (message.toLowerCase().startsWith('/choose') && chats[chatID].commandStatus.choose) {
-                
+
                 if (!(this.CheckPermissionCommand(chatID, 'choose', senderRank)))
                     return;
                 if (!(this.CheckTimeCommand(chatID, 'choose')))
@@ -354,7 +358,7 @@ function initializeClient(login) {
                     this.client.chatMessage(chatID, 'I don\'t think you understand how this works.');
 
                 }
-            
+
         //define
             } else if (message.toLowerCase().startsWith('/define ') && chats[chatID].commandStatus.define) {
 
@@ -398,7 +402,7 @@ function initializeClient(login) {
                     } else {
 
                         logger.info(`[${login.username}] Recieved /b command (${message}) command. user: ${this.client.users[userID64].player_name} (${userID64})`);
-			
+
                         this.client.chatMessage(chatID, response);
                     }
                 });
@@ -459,13 +463,9 @@ function initializeClient(login) {
                 logger.info(`[${login.username}] recieved "/group" command ${this.client.users[userID64].player_name} (${userID64})`);
 
                 this.client.inviteToGroup(userID64, config.group);
-<<<<<<< HEAD
-
-=======
->>>>>>> 77237f56441d4d39cc6f86d47c404b56fcb0510e
         //status
             } else if (message.startsWith('/status') && chats[chatID].commandStatus.status) {
-                
+
                 if (!(this.CheckPermissionCommand(chatID, 'status', senderRank)))
                     return;
                 if (!(this.CheckTimeCommand(chatID, 'status')))
@@ -476,7 +476,7 @@ function initializeClient(login) {
                 for (var i in chats[chatID].commandStatus) {
                     var anothertab = i === 'simplify' ? '\t' : '';
                     var status = chats[chatID].commandStatus[i] ? 'On' : 'Off';
-                    
+
                     var rank = '';
                     switch (chats[chatID].commandPermission[i]) {
                         case 0:
@@ -573,10 +573,10 @@ function initializeClient(login) {
                             var value = command[1].match(/\d+/);
                             if (value && value >= 0 && value <= 6) {
                                 if (command[0] === 'set' && value >= 2 && value <= 4)
-                                    chats[chatID].commandDelay[command[0]] = value;
+                                    chats[chatID].commandPermission[command[0]] = value;
 
                                 else if (command[0] !== 'set')
-                                    chats[chatID].commandDelay[command[0]] = value;
+                                    chats[chatID].commandPermission[command[0]] = value;
                                 return;
                             }
                         }
@@ -602,7 +602,7 @@ function initializeClient(login) {
 			message = message.substring(10).match(/[0-9]+/);
 			if (message)
   			    chats[chatID].maxlength = parseInt(message);
-                        
+
                     } else
                         this.client.chatMessage(chatID, 'If you have any problem configuring the bot visit: http://steamcommunity.com/groups/YaoiBot/discussions/0/1353742967809927087/');
                 }
@@ -616,7 +616,7 @@ function initializeClient(login) {
 
         //kick
             } else if (message.toLowerCase().startsWith('/kick ') && (chats[chatID].commandStatus.kick)) {
-            
+
                 if (!(this.CheckPermissionCommand(chatID, 'kick', senderRank)))
                     return;
                 if (!(this.CheckTimeCommand(chatID, 'kick')))
@@ -630,7 +630,7 @@ function initializeClient(login) {
                         this.client.kickFromChat(chatID, user);
                         logger.info(`[${login.username}] Kicked user: ${this.client.users[user].player_name} (${user}) from chat: ${this.client.chats[chatID].name} (${chatID})`);
                         return;
-                    } 
+                    }
                 }
                 this.client.chatMessage(chatID, 'User not found!');
         //report
@@ -647,12 +647,12 @@ function initializeClient(login) {
                 this.ResetTimer(chatID, 'math');
 
                 logger.info(`[${login.username}] Recieved /math command (${message}), user: ${this.client.users[userID64].player_name} (${userID64})`);
-                
+
                 message = message.substring(6);
 
-                if (message.includes(/[!:(range)]/i))
+                if (message.match(/[!:(range)]/i))
                             return;
-                
+
                 var result = '';
                 try {
                     var result = mathjs.eval(message).toString();
@@ -705,7 +705,7 @@ function initializeClient(login) {
                 if (!(this.CheckTimeCommand(chatID, 'goodnight')))
                     return;
                 this.ResetTimer(chatID, 'goodnight');
-                
+
                 this.client.chatMessage(chatID, `Goodnight ${this.client.users[userID64].player_name}`);
             }
 
@@ -735,11 +735,11 @@ function initializeClient(login) {
             bot.ask(message, (err, response) => {
                 /*if (err) {
                     console.log(err);
-                }*/ 
+                }*/
                     setTimeout(() => {
                         this.client.chatMessage(chatID, response);
                     }, 5000);
-                
+
             });
         }
     });
@@ -798,6 +798,10 @@ function initializeClient(login) {
 
     });
 
+    this.client.on('chatUserBanned#103582791456573856', (chatID, userID, actor) => {
+	this.client.unbanFromChat(chatID, userID);
+    });
+
 // Trading
     this.client.on('wallet', (hasWallet, currency, balance) => {         // Checks if wallet exists
         if (hasWallet) {
@@ -832,7 +836,7 @@ function initializeClient(login) {
         }
     });
 // Other
-	
+
     fs.readFile(`Polldata${login.username}.json`, (err, data) => {                   // Save polldata for later sessions if crashed or something idk
         if (err) {
             logger.warn(`[${login.username}] Error reading Polldata.json. If this is the first run, this is expected behavior: ${err}`);
@@ -919,7 +923,7 @@ fs.readFile('chats.json', (err, data) => {
         };
     } else {
         chats = JSON.parse(data);
-        
+
     }
 });
 
@@ -956,7 +960,7 @@ function ChatProperties() {
         help: 0,
         hug: 1,
         kick: 2,
-        leavechat: 2,
+        leavechat: 1,
         leavegroup: 3,
         lock: 2,
         math: 2,
@@ -974,7 +978,7 @@ function ChatProperties() {
         bot: 1,
         choose: 5,
         define: 5,
-        goodnight 5,
+        goodnight: 5,
         help: 20,
         hug: 1,
         kick: 5,
@@ -990,7 +994,7 @@ function ChatProperties() {
         bot: 0,
         choose: 0,
         define: 0,
-        goodnight 0,
+        goodnight: 0,
         help: 0,
         hug: 0,
         kick: 0,
